@@ -1,3 +1,6 @@
 [submodule "ulukai"]
 	path = ulukai
 	url = https://github.com/redeclipse/ulukai.git
+[submodule "sdl-opengl-utils"]
+	path = sdl-opengl-utils
+	url = git@github.com:walking-machine/sdl-opengl-utils.git
