@@ -1,5 +1,7 @@
-#version 430
-layout (binding = 0) uniform samplerCube samp;
+#version 300 es
+precision highp float;
+
+uniform samplerCube samp;
 in vec2 tc;
 out vec4 color;
 
@@ -20,7 +22,7 @@ float hard_fun(float w, float C)
 
 float d_hard_fun(float w, float C)
 {
-    return -2 * w + 3*C*w*w;
+    return -2.0f * w + 3.0f*C*w*w;
 }
 
 const float PI = 3.1415926535897932384626433832795;
@@ -46,22 +48,22 @@ void main(void)
 
     float w1 = 1.0f;
 
-    for (int i = 0; i < newtone_iters; i++) {
+    for (uint i = 0u; i < newtone_iters; i++) {
         w1 -= hard_fun(w1, C) / d_hard_fun(w1, C);
     }
 
     w1 -= w_decrement;
     float new_phi = 0.0f;
-    float w_step = w1 / num_divs;
+    float w_step = w1 / float(num_divs);
 
-    for (int i = 0; i < num_divs; i++) {
-        float w = w_step * i;
+    for (uint i = 0u; i < num_divs; i++) {
+        float w = w_step * float(i);
         float f_a = 2.0f / sqrt(hard_fun(w, C));
         float f_b = 2.0f / sqrt(hard_fun(w + w_step, C));
         float f_m = 2.0f / sqrt(hard_fun(w + w_step * 0.5f, C));
         float value = f_m;
-        if (integration_method == 1) value = (f_a + f_b) / 2.0f;
-        if (integration_method == 2) value = (f_a + 4.0f * f_m + f_b) / 6.0f;
+        if (integration_method == 1u) value = (f_a + f_b) / 2.0f;
+        if (integration_method == 2u) value = (f_a + 4.0f * f_m + f_b) / 6.0f;
         new_phi += w_step * value;
     }
 

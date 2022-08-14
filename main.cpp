@@ -23,6 +23,12 @@ int res_init()
     GLuint fs = read_shader("shaders/fs_bh.glsl", GL_FRAGMENT_SHADER);
     std::cout << "Creating program\n";
     prog_rc = create_program({vs, fs});
+    int len;
+    char str[128];
+    glGetProgramiv(prog_rc, GL_INFO_LOG_LENGTH, &len);
+    std::cout << "Log len: " << len << "\n";
+    glGetProgramInfoLog(prog_rc, 127, &len, str);
+    std::cout << "Log len: " << len << " Log: " << std::string(str, len) << "\n";
 
     std::cout << "Generating arrays\n";
 
@@ -54,8 +60,9 @@ int res_init()
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
-
-    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+#ifndef __EMSCRIPTEN__
+     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+#endif
     space_cubemap = load_cubemap({
                                   "ulukai/corona_rt.png",
                                   "ulukai/corona_lf.png",
@@ -69,7 +76,7 @@ int res_init()
     return 0;
 }
 
-void display()
+int display()
 {
     glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -84,6 +91,7 @@ void display()
     GLuint newtone_iters_loc = glGetUniformLocation(prog_rc, "newtone_iters");
     GLuint num_divs_loc = glGetUniformLocation(prog_rc, "num_divs");
     GLuint method_loc = glGetUniformLocation(prog_rc, "integration_method");
+    GLuint sampler_loc = glGetUniformLocation(prog_rc, "samp");
 
     glm::mat4 prj_mtx = glm::perspective(1.0f, aspect, 0.1f, 1000.0f);
     glm::mat4 view_rot_mtx = glm::mat4_cast(camera_quat);
@@ -97,6 +105,7 @@ void display()
     glUniform1ui(newtone_iters_loc, newtone_iters);
     glUniform1ui(num_divs_loc, num_divs);
     glUniform1ui(method_loc, integration_method);
+    glUniform1i(sampler_loc, 0);
 
     glBindVertexArray(vao);
 
@@ -104,7 +113,8 @@ void display()
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, space_cubemap);
-    checkOpenGLError();
+    if (checkOpenGLError())
+        return -1;
 
     glDisable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
@@ -112,7 +122,9 @@ void display()
     glCullFace(GL_FRONT);
     glFrontFace(GL_CCW);
     glDrawArrays(GL_TRIANGLES, 0, 6);
-    checkOpenGLError();
+    if (checkOpenGLError())
+        return -1;
+    return 0;
 }
 
 static void reset_viewport_to_window(SDL_Window *window)
@@ -189,10 +201,12 @@ int main(int, char**)
         return -1;
     }
 
+#ifndef __EMSCRIPTEN__
     if (SDL_GL_SetSwapInterval(1))  /* Enable vsync */ {
         std::cout << "SDL could set swap interval, error: " << SDL_GetError() << "\n";
         return -1;
     }
+#endif
 
     res_init();
     reset_viewport_to_window(window);
@@ -202,13 +216,16 @@ int main(int, char**)
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     ImGui::StyleColorsLight();
-    const char* glsl_version = "#version 130";
+    const char* glsl_version = NULL;
     ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     bool done = false;
     while (!done)
     {
+#ifdef __EMSCRIPTEN__
+    emscripten_sleep(0);
+#endif
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
@@ -244,7 +261,9 @@ int main(int, char**)
 
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-        display();
+        int ret = display();
+        if (ret)
+            return ret;
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         SDL_GL_SwapWindow(window);
     }
