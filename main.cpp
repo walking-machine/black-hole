@@ -173,17 +173,29 @@ int main(int, char**)
                                           window_flags);
 
     auto gl_context = create_context(window);
+    if (!gl_context) {
+        std::cout << "SDL could not create a context, error: " << SDL_GetError() << "\n";
+        return -1;
+    }
+
     GLenum glew_ret = glewInit();
     if (glew_ret != GLEW_OK) {
         std::cout << "glew could not start, error: " << (unsigned long) glew_ret << "\n";
-        return 1;
+        return -1;
     }
 
-    SDL_GL_MakeCurrent(window, gl_context);
-    SDL_GL_SetSwapInterval(1);  /* Enable vsync */
-    reset_viewport_to_window(window);
+    if (SDL_GL_MakeCurrent(window, gl_context)) {
+        std::cout << "SDL could make context current, error: " << SDL_GetError() << "\n";
+        return -1;
+    }
+
+    if (SDL_GL_SetSwapInterval(1))  /* Enable vsync */ {
+        std::cout << "SDL could set swap interval, error: " << SDL_GetError() << "\n";
+        return -1;
+    }
 
     res_init();
+    reset_viewport_to_window(window);
 
     /* Setup Dear ImGui */
     IMGUI_CHECKVERSION();
