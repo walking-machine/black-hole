@@ -24,9 +24,24 @@ OBJS = $(addsuffix .o, $(basename $(notdir $(SOURCES))))
 UNAME_S := $(shell uname -s)
 LINUX_GL_LIBS = -lGL -lGLEW -lSDL2_image
 
-CXXFLAGS = -std=c++11 -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends
-CXXFLAGS += -g -Wall -Wformat
+ASSETS_DIR = ulukai
+SHADERS_DIR = shaders
+GLM_DIR = /usr/include/glm
+
+COMMON_FLAGS = -std=c++11 -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends
+COMMON_FLAGS += -g -Wall -Wformat
 LIBS =
+CXXFLAGS = $(COMMON_FLAGS)
+
+WASM_FLAGS = $(COMMON_FLAGS)
+WASM_FLAGS += -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='["png"]'
+WASM_FLAGS += -s USE_SDL=2 -s FULL_ES3=1
+WASM_FLAGS += --preload-file $(ASSETS_DIR) --preload-file $(SHADERS_DIR)
+WASM_FLAGS += -I$(GLM_DIR)
+WASM_OUT = docs/black_hole.html
+WASM_OUT_FILES = $(WASM_OUT) $(addsuffix .data, $(basename $(WASM_OUT)))
+WASM_OUT_FILES += $(addsuffix .js, $(basename $(WASM_OUT)))
+WASM_OUT_FILES += $(addsuffix .wasm, $(basename $(WASM_OUT)))
 
 ##---------------------------------------------------------------------
 ## BUILD FLAGS PER PLATFORM
@@ -65,7 +80,7 @@ endif
 %.o:%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-%.o:$(IMGUI_DIR)/sdl-opengl-utils/%.cpp
+%.o:sdl-opengl-utils/%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 %.o:$(IMGUI_DIR)/%.cpp
@@ -80,5 +95,14 @@ all: $(EXE)
 $(EXE): $(OBJS)
 	$(CXX) -o $@ $^ $(CXXFLAGS) $(LIBS)
 
+wasm: $(WASM_OUT)
+	@echo HTML built
+
+$(WASM_OUT): $(SOURCES)
+	emcc -o $@ $^ $(WASM_FLAGS)
+
 clean:
 	rm -f $(EXE) $(OBJS)
+
+wasm_clean:
+	rm -f $(WASM_OUT_FILES)

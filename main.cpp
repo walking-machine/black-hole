@@ -1,8 +1,7 @@
+#include "sdl-opengl-utils/opengl_sdl_utils.hpp"
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
-
-#include "sdl-opengl-utils/opengl_sdl_utils.hpp"
 
 static GLuint prog_rc = 0;
 static GLuint vao;
