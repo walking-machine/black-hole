@@ -38,7 +38,7 @@ WASM_FLAGS += -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='["png"]'
 WASM_FLAGS += -s USE_SDL=2 -s FULL_ES3=1
 WASM_FLAGS += --preload-file $(ASSETS_DIR) --preload-file $(SHADERS_DIR)
 WASM_FLAGS += -I$(GLM_DIR)
-WASM_OUT = docs/black_hole.html
+WASM_OUT = docs/index.html
 WASM_OUT_FILES = $(WASM_OUT) $(addsuffix .data, $(basename $(WASM_OUT)))
 WASM_OUT_FILES += $(addsuffix .js, $(basename $(WASM_OUT)))
 WASM_OUT_FILES += $(addsuffix .wasm, $(basename $(WASM_OUT)))
